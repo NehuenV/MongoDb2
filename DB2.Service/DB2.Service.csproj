@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DB2.Repository\DB2.Repository.csproj" />
+  </ItemGroup>
+
 </Project>

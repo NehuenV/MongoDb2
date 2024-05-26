@@ -10,4 +10,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BD2.Common\BD2.Common.csproj" />
+    <ProjectReference Include="..\DB2.Service\DB2.Service.csproj" />
+  </ItemGroup>
+
 </Project>
