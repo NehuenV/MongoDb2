@@ -1,4 +1,5 @@
 ﻿using BD2.Common.Entities;
+using BD2.Common.model;
 using DB2.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
@@ -30,7 +31,19 @@ namespace BD2.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+        [HttpPost]
+        public async Task<IActionResult> GenerateData([FromBody] Request request)
+        {
+            try
+            {
+                var result = await _dataService.AgregarData(request.cantidad);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
        
     }
 }

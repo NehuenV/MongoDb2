@@ -16,11 +16,11 @@ namespace DB2.Service.Implementation
         {
             _mongoDbRepository = mongoDbRepository;
         }
-        public async Task<bool> AgregarData()
+        public async Task<bool> AgregarData(int cantidad)
         {
             try
             {
-                var facturas = new List<Factura>();
+                var facturas = Builder.GetFacturas(cantidad);
                 var result = await _mongoDbRepository.AgregarData(facturas);
                 return result;
             }

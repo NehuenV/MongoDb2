@@ -13,9 +13,9 @@ namespace BD2.Common.Entities
         public DateTime FechaHora { get; set; }
         public decimal TotalVenta { get; set; }
         public FormasDePago FormasDePago { get; set; }
-        public Persona EmpleadoCaja { get; set; }
-        public Persona EmpleadoVenta { get; set; }
-        public Persona Encargado { get; set; }
+        public Empleado EmpleadoCaja { get; set; }
+        public Empleado EmpleadoVenta { get; set; }
+        public Empleado Encargado { get; set; }
         public Persona Cliente { get; set; }
         public Sucursal Sucursal { get; set; }
         public DetalleFactura DetalleFactura { get; set; }

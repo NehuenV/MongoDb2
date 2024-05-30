@@ -9,7 +9,7 @@ namespace DB2.Service.Interface
 {
     public interface IDataService
     {
-        Task<bool> AgregarData();
+        Task<bool> AgregarData(int cantidad);
         Task<List<Factura>> ConsultarData();
     }
 }

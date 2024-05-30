@@ -13,6 +13,6 @@ namespace BD2.Common.Entities
         public decimal PrecioLista {  get; set; }
         public decimal PrecioVenta {  get; set; }
         public Factura Factura { get; set; }
-        public Producto Producto { get; set; }
+        //public Producto Producto { get; set; }
     }
 }
