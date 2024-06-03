@@ -11,5 +11,6 @@ namespace DB2.Service.Interface
     {
         Task<bool> AgregarData(int cantidad);
         Task<List<Factura>> ConsultarData();
+        Task<dynamic> ConsultarAgrupadoEntreFechas();
     }
 }

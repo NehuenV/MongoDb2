@@ -17,7 +17,7 @@ namespace BD2.Api.Controllers
         {
             _dataService = dataService;
         }
-        [HttpGet]
+        [HttpGet(nameof(GetData))]
         [ProducesResponseType(typeof(List<Factura>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(List<Factura>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetData()
@@ -31,7 +31,7 @@ namespace BD2.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        [HttpPost]
+        [HttpPost(nameof(GenerateData))]
         public async Task<IActionResult> GenerateData([FromBody] Request request)
         {
             try
@@ -44,6 +44,20 @@ namespace BD2.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
-       
+
+        [HttpGet(nameof(ConsultarAgrupadoEntreFechas))]
+        public async Task<IActionResult> ConsultarAgrupadoEntreFechas()
+        {
+            try
+            {
+                var result = await _dataService.ConsultarAgrupadoEntreFechas();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

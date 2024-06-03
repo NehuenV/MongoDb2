@@ -20,7 +20,7 @@ namespace DB2.Service.Implementation
         {
             try
             {
-                var facturas = Builder.GetFacturas(cantidad);
+                var facturas = await Builder.GetFacturasAsync(cantidad);
                 var result = await _mongoDbRepository.AgregarData(facturas);
                 return result;
             }
@@ -36,6 +36,18 @@ namespace DB2.Service.Implementation
                 var result =await _mongoDbRepository.ConsultarData();
                 return result;
             }catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<dynamic> ConsultarAgrupadoEntreFechas()
+        {
+            try
+            {
+                var totalVentas = await _mongoDbRepository.ObtenerVentasPorSucursalesAsync(DateTime.Parse("2024/05/01"), DateTime.Parse("2024/06/30"));
+                return totalVentas;
+            }
+            catch (Exception)
             {
                 throw;
             }

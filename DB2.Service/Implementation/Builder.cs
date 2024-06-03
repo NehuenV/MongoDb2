@@ -1,6 +1,7 @@
 ﻿using BD2.Common.Entities;
 using Bogus;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,14 +15,29 @@ namespace DB2.Service.Implementation
         {
 
         }
-        public static List<Factura> GetFacturas(int cantidad)
+        public static async Task<List<Factura>> GetFacturasAsync(int cantidad)
+        {
+            var listaFacturas = new ConcurrentBag<Factura>();
+            var tasks = new List<Task>();
+
+            for (int i = 0; i < cantidad; i++)
+            {
+                tasks.Add(GenerarFacturaAsync(listaFacturas));
+            }
+
+            await Task.WhenAll(tasks);
+
+            return listaFacturas.ToList();
+        }
+
+        private static async Task GenerarFacturaAsync(ConcurrentBag<Factura> listaFacturas)
         {
             var faker = new Faker<Factura>()
                 .RuleFor(f => f.IdFactura, f => f.IndexFaker)
                 .RuleFor(f => f.IdTicket, f => f.Random.Number(1000, 9999))
                 .RuleFor(f => f.FechaHora, f => f.Date.Between(DateTime.Now.AddDays(-30), DateTime.Now))
                 .RuleFor(f => f.TotalVenta, f => f.Random.Decimal(1, 1000))
-                .RuleFor(f => f.FormasDePago, f =>Builder.GetFormasDePago())
+                .RuleFor(f => f.FormasDePago, f => Builder.GetFormasDePago())
                 .RuleFor(f => f.EmpleadoCaja, f => Builder.GetEmpleados())
                 .RuleFor(f => f.EmpleadoVenta, f => Builder.GetEmpleados())
                 .RuleFor(f => f.Encargado, f => Builder.GetEmpleados())
@@ -29,13 +45,10 @@ namespace DB2.Service.Implementation
                 .RuleFor(f => f.Sucursal, f => Builder.GetSucursales())
                 .RuleFor(f => f.DetalleFactura, f => Builder.GetDetallesFactura());
 
-            var listaFacturas = new List<Factura>();
-            for (int i = 0; i < cantidad; i++)
+            await Task.Run(() =>
             {
                 listaFacturas.Add(faker.Generate());
-            }
-
-            return listaFacturas;
+            });
         }
         public static ObraSocial GetObraSocial()
         {
@@ -160,7 +173,7 @@ namespace DB2.Service.Implementation
                 .RuleFor(s => s.Calle, f => f.Address.StreetName())
                 .RuleFor(s => s.Localidad, f => Builder.GetLocalidad())
                 .RuleFor(s => s.Altura, f => Convert.ToInt32(f.Address.BuildingNumber()))
-                .RuleFor(s => s.NumeroSucursal, f => f.Random.Number(1, 100));
+                .RuleFor(s => s.NumeroSucursal, f => f.Random.Number(1, 5));
             return faker.Generate();
         }
         public static Producto GetProductos()
@@ -194,8 +207,8 @@ namespace DB2.Service.Implementation
                 .RuleFor(df => df.IdDetalleFactura, f => f.IndexFaker)
                 .RuleFor(df => df.Cantidad, f => f.Random.Number(1, 10))
                 .RuleFor(df => df.PrecioLista, f => f.Random.Decimal(1, 100))
-                .RuleFor(df => df.PrecioVenta, f => f.Random.Decimal(1, 100));
-                //.RuleFor(df => df.Producto, f => Builder.GetProductos());
+                .RuleFor(df => df.PrecioVenta, f => f.Random.Decimal(1, 100))
+                .RuleFor(df => df.Producto, f => Builder.GetProductos());
 
             return faker.Generate();
         }
