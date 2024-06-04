@@ -1,5 +1,6 @@
 ﻿using BD2.Common;
 using BD2.Common.Entities;
+using BD2.Common.model;
 using DB2.Repository.Interface;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -20,7 +21,7 @@ namespace DB2.Repository.Implementation
     {
         private readonly IMongoDatabase _dataBase;
         private readonly IMongoCollection<Factura> _facturaCollection;
-        public MongoDbRepository(IMongoClient mongoClient, IOptions<MongoDBSettings> options) 
+        public MongoDbRepository(IMongoClient mongoClient, IOptions<MongoDBSettings> options)
         {
             _dataBase = mongoClient.GetDatabase(options.Value.DatabaseName);
             _facturaCollection = _dataBase.GetCollection<Factura>("Facturas");
@@ -45,8 +46,8 @@ namespace DB2.Repository.Implementation
         {
             try
             {
-                
-                var result= await _facturaCollection.Find(new BsonDocument()).ToListAsync();
+
+                var result = await _facturaCollection.Find(new BsonDocument()).ToListAsync();
                 return result;
             }
             catch (Exception ex)
@@ -71,31 +72,10 @@ namespace DB2.Repository.Implementation
 
         //    return facturas;
         //}
-        public class VentasPorSucursal
-        {
-            public int IdSucursal { get; set; }
-            public string NombreSucursal { get; set; }
-            public decimal TotalVentas { get; set; }
-        }
-        public async Task<decimal> ObtenerTotalVentasAsync(DateTime fechaDesde, DateTime fechaHasta)
-        {
-            var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
-                         Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
 
-            var resultado = await _facturaCollection.Aggregate()
-                       .Match(filtro)
-                       .Group(
-                           f => f.Sucursal.NumeroSucursal,
-                           g => new
-                           {
-                               NumeroSucursal = g.Key,
-                               TotalVentas = g.Sum(x => x.TotalVenta)
-                           })
-                       .ToListAsync();
+        // punto 1 
 
-            return  0;
-        }
-        public async Task<List<VentasPorSucursal>> ObtenerVentasPorSucursalesAsync(DateTime fechaDesde, DateTime fechaHasta)
+        public async Task<List<ReporteVentas>> punto1(DateTime fechaDesde, DateTime fechaHasta)
         {
             var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
                          Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
@@ -106,17 +86,106 @@ namespace DB2.Repository.Implementation
                 {
                     IdSucursal = g.Key.NumeroSucursal,
                     NombreSucursal = g.Key.Nombre,
-                    TotalVentas = g.Sum(f => f.TotalVenta)
+                    TotalVentaSucursal = g.Select(x => x.DetalleFactura.Sum(f => f.Cantidad))
                 })
                 .ToListAsync();
+            return ventasPorSucursales.Select(v => new ReporteVentas
+            {
+                IdSucursal = v.IdSucursal,
+                NombreSucursal = v.NombreSucursal,
+                TotalVentas = v.TotalVentaSucursal.Sum()
+            }).ToList();
+        }
+        // punto 2
+        public async Task<List<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
+                         Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
 
+            var ventasPorSucursales = await _facturaCollection.Aggregate()
+                .Match(filtro)
+                .Group(f => new { f.Sucursal.NumeroSucursal, f.Sucursal.Localidad.Nombre, ObraSocial = f.Cliente.ObraSocial.Nombre }, g => new
+                {
+                    IdSucursal = g.Key.NumeroSucursal,
+                    NombreSucursal = g.Key.Nombre,
+                    ObraSocial = g.Key.ObraSocial,
+                    TotalVentaSucursal = g.Select(x => x.DetalleFactura.Sum(f => f.Cantidad))
+                })
+
+
+                .ToListAsync();
+
+            return ventasPorSucursales.Select(v => new VentasPorSucursalYObraSocial
+            {
+                IdSucursal = v.IdSucursal,
+                NombreSucursal = v.NombreSucursal,
+                TotalVentas = v.TotalVentaSucursal.Sum(),
+                ObraSocial = v.ObraSocial
+            }).OrderBy(x => x.ObraSocial).ToList();
+        }
+
+        // punto 3
+        public async Task<List<VentasPorSucursal>> punto3(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
+             Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
+
+            var ventasPorSucursales = await _facturaCollection.Aggregate()
+                .Match(filtro)
+                .Group(f => new { f.Sucursal.NumeroSucursal, f.Sucursal.Localidad.Nombre }, g => new
+                {
+                    IdSucursal = g.Key.NumeroSucursal,
+                    NombreSucursal = g.Key.Nombre,
+                    TotalVentaSucursal = g.Select(x => x.TotalVenta)
+                })
+                .ToListAsync();
             return ventasPorSucursales.Select(v => new VentasPorSucursal
             {
                 IdSucursal = v.IdSucursal,
                 NombreSucursal = v.NombreSucursal,
-                TotalVentas = v.TotalVentas
+                TotalVentas = v.TotalVentaSucursal.Sum()
             }).ToList();
         }
+
+        // punto 4
+        public async Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            FilterDefinition<BsonDocument> filtroFechas = Builders<BsonDocument>.Filter.And(
+             Builders<BsonDocument>.Filter.Gte("FechaHora", fechaDesde),
+             Builders<BsonDocument>.Filter.Lte("FechaHora", fechaHasta));
+            var aggregationPipeline = new BsonDocument[]
+        {
+            new BsonDocument("$match", new BsonDocument
+            {
+                { "FechaHora", new BsonDocument
+                    {
+                        { "$gte", fechaDesde },
+                        { "$lte", fechaHasta }
+                    }
+                }
+            }),
+            new BsonDocument("$unwind", "$DetalleFactura"),
+            new BsonDocument("$group", new BsonDocument
+            {
+                { "_id", "$DetalleFactura.Producto.TipoProducto.Nombre" },
+                { "totalVendido", new BsonDocument("$sum", "$DetalleFactura.Cantidad") }
+            })
+        };
+
+
+            // Ejecutar la agregación
+            var aggregationResult = await _facturaCollection.AggregateAsync<BsonDocument>(aggregationPipeline);
+            var result = new List<CantidadProductos>();
+            // Procesar los resultados
+            await aggregationResult.ForEachAsync(document =>
+            {
+                var tipoProducto = document["_id"].AsString;
+                var totalVendido = document["totalVendido"].AsInt32;
+                result.Add(new CantidadProductos { TipoProducto = tipoProducto, CantidadProducto = totalVendido });
+            });
+            return result;
+         }
+
 
     }
 }

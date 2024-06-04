@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,7 +44,7 @@ namespace DB2.Service.Implementation
                 .RuleFor(f => f.Encargado, f => Builder.GetEmpleados())
                 .RuleFor(f => f.Cliente, f => Builder.GetPersonas())
                 .RuleFor(f => f.Sucursal, f => Builder.GetSucursales())
-                .RuleFor(f => f.DetalleFactura, f => Builder.GetDetallesFactura());
+                .RuleFor(f => f.DetalleFactura, f => new List<DetalleFactura> { Builder.GetDetallesFactura(), Builder.GetDetallesFactura() });
 
             await Task.Run(() =>
             {
@@ -58,13 +59,13 @@ namespace DB2.Service.Implementation
                 .RuleFor(o => o.Id, f => f.IndexFaker)
                 .RuleFor(o => o.Nombre, f => f.PickRandom(obraSociales));
         }
-        public static Localidad GetLocalidad()
+        public static Localidad GetLocalidad(int? param = null)
         {
-            var localidades = new List<string> { "Temperley", "Lomas de zamora", "Adrogue", "Banfield", "Remedios de escalada","Lanus","Gerli" ,"Avellaneda"};
+            var localidades = new List<string> { "Temperley", "Lomas de zamora", "Adrogue", "Banfield", "Remedios de escalada",};
 
             return new Faker<Localidad>()
                 .RuleFor(o => o.Id, f => f.IndexFaker)
-                .RuleFor(o => o.Nombre, f => f.PickRandom(localidades));
+                .RuleFor(o => o.Nombre, f => param == null ? f.PickRandom(localidades) : localidades[(int)param-1]);
         }
         public static Provincia GetProvincias()
         {
@@ -83,16 +84,8 @@ namespace DB2.Service.Implementation
         {
             var productos = new List<string>
         {
-            "Desodorante",
-            "Crema Corporal",
-            "Champú",
-            "Acondicionador",
-            "Colonia",
-            "Paracetamol",
-            "Ibuprofeno",
-            "Amoxicilina",
-            "Omeprazol",
-            "Loratadina"
+            "Perfumeria",
+            "Medicamento"
         };
 
             return new Faker<TipoProducto>()
@@ -171,9 +164,9 @@ namespace DB2.Service.Implementation
             var faker = new Faker<Sucursal>()
                 .RuleFor(s => s.IdSucursal, f => f.IndexFaker)
                 .RuleFor(s => s.Calle, f => f.Address.StreetName())
-                .RuleFor(s => s.Localidad, f => Builder.GetLocalidad())
-                .RuleFor(s => s.Altura, f => Convert.ToInt32(f.Address.BuildingNumber()))
-                .RuleFor(s => s.NumeroSucursal, f => f.Random.Number(1, 5));
+                .RuleFor(s => s.NumeroSucursal, f => f.Random.Number(1, 5))
+                .RuleFor(s => s.Localidad, (f,s) => Builder.GetLocalidad(s.NumeroSucursal))
+                .RuleFor(s => s.Altura, f => Convert.ToInt32(f.Address.BuildingNumber()));
             return faker.Generate();
         }
         public static Producto GetProductos()

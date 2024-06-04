@@ -1,6 +1,8 @@
 ﻿using BD2.Common.Entities;
+using BD2.Common.model;
 using DB2.Repository.Interface;
 using DB2.Service.Interface;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,12 +42,48 @@ namespace DB2.Service.Implementation
                 throw;
             }
         }
-        public async Task<dynamic> ConsultarAgrupadoEntreFechas()
+        public async Task<TotalSucursal<ReporteVentas>> punto1(DateTime from, DateTime to)
         {
             try
             {
-                var totalVentas = await _mongoDbRepository.ObtenerVentasPorSucursalesAsync(DateTime.Parse("2024/05/01"), DateTime.Parse("2024/06/30"));
-                return totalVentas;
+                var totalVentas = await _mongoDbRepository.punto1(from, to);
+                return new TotalSucursal<ReporteVentas> (totalVentas,  totalVentas.Sum(f => f.TotalVentas));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<TotalSucursal<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            try
+            {
+                var totalVentas = await _mongoDbRepository.punto2(fechaDesde, fechaHasta);
+                return new TotalSucursal<VentasPorSucursalYObraSocial>(totalVentas, totalVentas.Sum(f => f.TotalVentas));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<TotalSucursal<VentasPorSucursal>> punto3(DateTime from, DateTime to)
+        {
+            try
+            {
+                var totalVentas = await _mongoDbRepository.punto3(from, to);
+                return new TotalSucursal<VentasPorSucursal>(totalVentas, totalVentas.Sum(f => f.TotalVentas));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta)
+        {
+            try
+            {
+                var totalVentas = await _mongoDbRepository.punto4(fechaDesde, fechaHasta);
+                return totalVentas;// new TotalSucursal<VentasPorSucursalYObraSocial>(totalVentas, totalVentas.Sum(f => f.TotalVentas));
             }
             catch (Exception)
             {

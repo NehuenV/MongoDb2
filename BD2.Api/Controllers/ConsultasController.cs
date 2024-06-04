@@ -45,12 +45,38 @@ namespace BD2.Api.Controllers
             }
         }
 
-        [HttpGet(nameof(ConsultarAgrupadoEntreFechas))]
-        public async Task<IActionResult> ConsultarAgrupadoEntreFechas()
+        [HttpGet(nameof(punto1))]
+        public async Task<IActionResult> punto1(string from, string to)
         {
             try
             {
-                var result = await _dataService.ConsultarAgrupadoEntreFechas();
+                var result = await _dataService.punto1(DateTime.Parse(from),DateTime.Parse(to));
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet(nameof(punto2))]
+        public async Task<IActionResult> punto2(string from, string to)
+        {
+            try
+            {
+                var result = await _dataService.punto2(DateTime.Parse(from), DateTime.Parse(to));
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet(nameof(punto3))]
+        public async Task<IActionResult> punto3(string from, string to)
+        {
+            try
+            {
+                var result = await _dataService.punto3(DateTime.Parse(from), DateTime.Parse(to));
                 return Ok(result);
             }
             catch (Exception ex)
@@ -59,5 +85,18 @@ namespace BD2.Api.Controllers
             }
         }
 
+        [HttpGet(nameof(punto4))]
+        public async Task<IActionResult> punto4(string from, string to)
+        {
+            try
+            {
+                var result = await _dataService.punto4(DateTime.Parse(from), DateTime.Parse(to));
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

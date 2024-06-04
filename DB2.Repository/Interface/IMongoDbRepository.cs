@@ -1,4 +1,5 @@
 ﻿using BD2.Common.Entities;
+using BD2.Common.model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,9 @@ namespace DB2.Repository.Interface
     {
         Task<bool> AgregarData(List<Factura> lista);
         Task<List<Factura>> ConsultarData();
-        Task<List<VentasPorSucursal>> ObtenerVentasPorSucursalesAsync(DateTime fechaDesde, DateTime fechaHasta);
-        Task<decimal> ObtenerTotalVentasAsync(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<ReporteVentas>> punto1(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<VentasPorSucursal>> punto3(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta);
     }
 }

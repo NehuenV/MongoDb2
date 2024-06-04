@@ -20,6 +20,6 @@ namespace BD2.Common.Entities
         public Empleado Encargado { get; set; }
         public Persona Cliente { get; set; }
         public Sucursal Sucursal { get; set; }
-        public DetalleFactura DetalleFactura { get; set; }
+        public List<DetalleFactura> DetalleFactura { get; set; }
     }
 }
