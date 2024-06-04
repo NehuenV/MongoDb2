@@ -90,5 +90,41 @@ namespace DB2.Service.Implementation
                 throw;
             }
         }
+        public async Task<List<RankingVentaProducto>> punto5()
+        {
+            try
+            {
+               var result = await _mongoDbRepository.punto5();
+                return result;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<List<RankingCantidadProductos>> punto6()
+        {
+            try
+            {
+                var result = await _mongoDbRepository.punto6();
+                return result;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        public async Task<dynamic> punto7()
+        {
+            try
+            {
+                var result = await _mongoDbRepository.punto7();
+                return result;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }

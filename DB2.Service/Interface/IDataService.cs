@@ -16,5 +16,8 @@ namespace DB2.Service.Interface
         Task<TotalSucursal<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta);
         Task<TotalSucursal<VentasPorSucursal>> punto3(DateTime from, DateTime to);
         Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<RankingVentaProducto>> punto5();
+        Task<List<RankingCantidadProductos>> punto6();
+        Task<dynamic> punto7();
     }
 }

@@ -17,5 +17,8 @@ namespace DB2.Repository.Interface
         Task<List<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta);
         Task<List<VentasPorSucursal>> punto3(DateTime fechaDesde, DateTime fechaHasta);
         Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta);
+        Task<List<RankingVentaProducto>> punto5();
+        Task<List<RankingCantidadProductos>> punto6();
+        Task<dynamic> punto7();
     }
 }

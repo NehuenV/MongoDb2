@@ -56,24 +56,6 @@ namespace DB2.Repository.Implementation
                 return new List<Factura>();
             }
         }
-        //public async Task<dynamic> ConsultarAgrupadoEntreFechas()
-        //{
-        //    var collection = _dataBase.GetCollection<BsonDocument>("Facturas"); // Reemplaza con el nombre de tu colección
-
-        //    var filtro = Builders<BsonDocument>.Filter.Eq("Sucursal.NumeroSucursal", 2);
-        //    var resultados = await collection.Find(filtro).ToListAsync();
-
-        //    var facturas = new List<Factura>();
-        //    foreach (var documento in resultados)
-        //    {
-        //        var factura = BsonSerializer.Deserialize<Factura>(documento);
-        //        facturas.Add(factura);
-        //    }
-
-        //    return facturas;
-        //}
-
-        // punto 1 
 
         public async Task<List<ReporteVentas>> punto1(DateTime fechaDesde, DateTime fechaHasta)
         {
@@ -184,8 +166,95 @@ namespace DB2.Repository.Implementation
                 result.Add(new CantidadProductos { TipoProducto = tipoProducto, CantidadProducto = totalVendido });
             });
             return result;
-         }
+        }
+        public async Task<List<RankingVentaProducto>> punto5()
+        {
+            var pipeline = new List<BsonDocument>
+            {
+                new BsonDocument("$unwind", "$DetalleFactura"),
 
+                new BsonDocument("$addFields", new BsonDocument
+                {
+                    { "DetalleFactura.PrecioVentaNumeric", new BsonDocument("$toDouble", "$DetalleFactura.PrecioVenta") },
+                    { "DetalleFactura.CantidadNumeric", new BsonDocument("$toInt", "$DetalleFactura.Cantidad") }
+                }),
+                new BsonDocument("$group", new BsonDocument
+                {
+                    { "_id", new BsonDocument
+                        {
+                            { "producto", "$DetalleFactura.Producto.Nombre" },
+                            { "sucursal", "$Sucursal.NumeroSucursal" }
+                        }
+                    },
+                    { "totalVendido", new BsonDocument("$sum", new BsonDocument("$multiply", new BsonArray
+                        {
+                            "$DetalleFactura.PrecioVentaNumeric",
+                            "$DetalleFactura.Cantidad"
+                        })
+                    )}
+                }),
+                new BsonDocument("$sort", new BsonDocument("totalVendido", -1))
+            };
+            var aggregationResult = await _facturaCollection.AggregateAsync<BsonDocument>(pipeline);
+            var result = new List<RankingVentaProducto>();
+            await aggregationResult.ForEachAsync(document =>
+            {
+                var producto = document["_id"]["producto"].AsString;
+                var sucursal = document["_id"]["sucursal"].AsInt32;
+                var totalVendido = document["totalVendido"].AsDouble;
+                result.Add(new RankingVentaProducto { montoVenta = totalVendido, NumeroSucursal = sucursal ,Producto = producto});
+            });
+            return result;
+        }
+        public async Task<List<RankingCantidadProductos>> punto6()
+        {
+            var pipeline = new List<BsonDocument>
+        {
+            new BsonDocument("$unwind", "$DetalleFactura"),
+            new BsonDocument("$group", new BsonDocument
+            {
+                { "_id", new BsonDocument
+                    {
+                        { "producto", "$DetalleFactura.Producto.Nombre" },
+                        { "sucursal", "$Sucursal.NumeroSucursal" }
+                    }
+                },
+                { "cantidadVendida", new BsonDocument("$sum", "$DetalleFactura.Cantidad") }
+            }),
+            new BsonDocument("$sort", new BsonDocument("cantidadVendida", -1))
+        };
 
+            var aggregationResult = await _facturaCollection.AggregateAsync<BsonDocument>(pipeline);
+            var result = new List<RankingCantidadProductos>();
+            await aggregationResult.ForEachAsync(document =>
+            {
+                var producto = document["_id"]["producto"].AsString;
+                var sucursal = document["_id"]["sucursal"].AsInt32;
+                var cantidadVendida = document["cantidadVendida"].AsInt32;
+                result.Add(new RankingCantidadProductos { CantidadVenta = cantidadVendida, NumeroSucursal = sucursal, Producto = producto });
+            });
+            return result;
+        }
+        public async Task<dynamic> punto7()
+        {
+            var pipeline = new List<BsonDocument>
+        {
+            new BsonDocument("$unwind", "$DetalleFactura"),
+            new BsonDocument("$group", new BsonDocument
+            {
+                { "_id", "$Cliente" },
+                { "totalCompras", new BsonDocument("$sum", 1) }
+            }),
+            new BsonDocument("$sort", new BsonDocument("totalCompras", -1))
+        };
+
+            var result = _facturaCollection.Aggregate<BsonDocument>(pipeline).ToList();
+
+            foreach (var document in result)
+            {
+                Console.WriteLine(document);
+            }
+            return null;
+        }
     }
 }
