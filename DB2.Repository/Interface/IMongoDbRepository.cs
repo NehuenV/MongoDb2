@@ -19,6 +19,7 @@ namespace DB2.Repository.Interface
         Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta);
         Task<List<RankingVentaProducto>> punto5();
         Task<List<RankingCantidadProductos>> punto6();
-        Task<dynamic> punto7();
+        Task<List<ClienteCompra>> punto7();
+        Task<List<ClienteSucursalCompra>> punto8();
     }
 }

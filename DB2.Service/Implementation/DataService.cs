@@ -114,7 +114,7 @@ namespace DB2.Service.Implementation
                 throw;
             }
         }
-        public async Task<dynamic> punto7()
+        public async Task<List<ClienteCompra>> punto7()
         {
             try
             {
@@ -126,5 +126,18 @@ namespace DB2.Service.Implementation
                 throw;
             }
         }
+        public async Task<List<ClienteSucursalCompra>> punto8()
+        {
+            try
+            {
+                var result = await _mongoDbRepository.punto8();
+                return result;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        
     }
 }

@@ -33,7 +33,7 @@ namespace DB2.Repository.Implementation
             {
                 var collection = _dataBase.GetCollection<Factura>("Facturas");
                 await collection.InsertManyAsync(lista);
-                return false;
+                return true;
             }
             catch (Exception ex)
             {
@@ -235,26 +235,73 @@ namespace DB2.Repository.Implementation
             });
             return result;
         }
-        public async Task<dynamic> punto7()
+        public async Task<List<ClienteCompra>> punto7()
         {
-            var pipeline = new List<BsonDocument>
+            var pipeline = new BsonDocument[]
+            {
+                    new BsonDocument("$group", new BsonDocument
+                    {
+                        { "_id", new BsonDocument
+                            {
+                                { "ClienteId", "$Cliente.IdPersona" },
+                                { "Nombre", "$Cliente.Nombre" },
+                                { "Apellido", "$Cliente.Apellido" }
+                            }
+                        },
+                        { "TotalCompras", new BsonDocument("$sum", new BsonDocument("$toDouble", "$TotalVenta")) }
+                    }),
+                    new BsonDocument("$sort", new BsonDocument("TotalCompras", -1))
+            };
+            var result = _facturaCollection.Aggregate<BsonDocument>(pipeline);
+            var clientesCompras = new List<ClienteCompra>();
+            await result.ForEachAsync(doc =>
+            {
+                var clienteCompra = new ClienteCompra
+                {
+                    ClienteId = doc["_id"]["ClienteId"].AsInt32,
+                    Nombre = doc["_id"]["Nombre"].AsString,
+                    Apellido = doc["_id"]["Apellido"].AsString,
+                    TotalCompras = doc["TotalCompras"].ToDouble()
+                };
+                clientesCompras.Add(clienteCompra);
+            });
+            return clientesCompras;
+        }
+
+        public async Task<List<ClienteSucursalCompra>> punto8()
         {
-            new BsonDocument("$unwind", "$DetalleFactura"),
-            new BsonDocument("$group", new BsonDocument
+            var pipeline = new BsonDocument[]
             {
-                { "_id", "$Cliente" },
-                { "totalCompras", new BsonDocument("$sum", 1) }
-            }),
-            new BsonDocument("$sort", new BsonDocument("totalCompras", -1))
-        };
+                new BsonDocument("$group", new BsonDocument
+                {
+                    { "_id", new BsonDocument
+                        {
+                            
+                            { "Nombre", "$Cliente.Nombre" },
+                            { "Apellido", "$Cliente.Apellido" },
+                            
+                            { "NumeroSucursal", "$Sucursal.NumeroSucursal" }
+                        }
+                    },
+                    { "TotalCompras", new BsonDocument("$sum", new BsonDocument("$toDouble", "$TotalVenta")) }
+                }),
+                new BsonDocument("$sort", new BsonDocument("TotalCompras", -1))
+            };
+            var result = _facturaCollection.Aggregate<BsonDocument>(pipeline);
+            var clientesSucursalesCompras = new List<ClienteSucursalCompra>();
 
-            var result = _facturaCollection.Aggregate<BsonDocument>(pipeline).ToList();
-
-            foreach (var document in result)
+            await result.ForEachAsync(doc =>
             {
-                Console.WriteLine(document);
-            }
-            return null;
+                var clienteSucursalCompra = new ClienteSucursalCompra
+                {
+                    Nombre = doc["_id"]["Nombre"].AsString,
+                    Apellido = doc["_id"]["Apellido"].AsString,
+                    SucursalId = doc["_id"]["NumeroSucursal"].AsInt32,
+                    TotalCompras = doc["TotalCompras"].ToDouble()
+                };
+                clientesSucursalesCompras.Add(clienteSucursalCompra);
+            });
+            return clientesSucursalesCompras;
         }
     }
 }

@@ -20,10 +20,14 @@ namespace DB2.Service.Implementation
         {
             var listaFacturas = new ConcurrentBag<Factura>();
             var tasks = new List<Task>();
-
+            var personas = new List<Persona>();
+            for (var i = 0; i < 20; i++)
+            {
+                personas.Add(Builder.GetPersonas());
+            }
             for (int i = 0; i < cantidad; i++)
             {
-                tasks.Add(GenerarFacturaAsync(listaFacturas));
+                tasks.Add(GenerarFacturaAsync(listaFacturas, personas));
             }
 
             await Task.WhenAll(tasks);
@@ -31,8 +35,9 @@ namespace DB2.Service.Implementation
             return listaFacturas.ToList();
         }
 
-        private static async Task GenerarFacturaAsync(ConcurrentBag<Factura> listaFacturas)
+        private static async Task GenerarFacturaAsync(ConcurrentBag<Factura> listaFacturas, List<Persona> personas)
         {
+
             var faker = new Faker<Factura>()
                 .RuleFor(f => f.IdFactura, f => f.IndexFaker)
                 .RuleFor(f => f.IdTicket, f => f.Random.Number(1000, 9999))
@@ -42,7 +47,7 @@ namespace DB2.Service.Implementation
                 .RuleFor(f => f.EmpleadoCaja, f => Builder.GetEmpleados())
                 .RuleFor(f => f.EmpleadoVenta, f => Builder.GetEmpleados())
                 .RuleFor(f => f.Encargado, f => Builder.GetEmpleados())
-                .RuleFor(f => f.Cliente, f => Builder.GetPersonas())
+                .RuleFor(f => f.Cliente, f =>f.PickRandom(personas))
                 .RuleFor(f => f.Sucursal, f => Builder.GetSucursales())
                 .RuleFor(f => f.DetalleFactura, f => new List<DetalleFactura> { Builder.GetDetallesFactura(), Builder.GetDetallesFactura() });
 

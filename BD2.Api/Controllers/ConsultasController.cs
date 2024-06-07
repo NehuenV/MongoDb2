@@ -138,5 +138,18 @@ namespace BD2.Api.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet(nameof(punto8))]
+        public async Task<IActionResult> punto8()
+        {
+            try
+            {
+                var result = await _dataService.punto8();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
