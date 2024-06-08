@@ -6,16 +6,26 @@ using System.Threading.Tasks;
 
 namespace BD2.Common.model
 {
-    public class ReporteVentas
+    public class VentasReporte
     {
-        public ReporteVentas()
-        {
+        public List<VentaCadena> TotalVentasCadena { get; set; }
+        public List<VentaSucursal> VentasPorSucursal { get; set; }
+    }
 
-        }
-        public int IdSucursal { get; set; }
-        public string NombreSucursal { get; set; }
-        public int TotalVentas { get; set; }
+    public class VentaCadena
+    {
+        public string _id { get; set; }
+        public int TotalCantidadVentas { get; set; }
+    }
 
+    public class VentaSucursal
+    {
+        public SucursalNombreClass _id { get; set; }
+        public int TotalCantidadVentas { get; set; }
+    }
 
+    public class SucursalNombreClass
+    {
+        public int SucursalNombre { get; set; }
     }
 }

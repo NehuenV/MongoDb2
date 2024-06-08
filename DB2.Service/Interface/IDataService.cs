@@ -12,9 +12,9 @@ namespace DB2.Service.Interface
     {
         Task<bool> AgregarData(int cantidad);
         Task<List<Factura>> ConsultarData();
-        Task<TotalSucursal<ReporteVentas>> punto1(DateTime from, DateTime to);
-        Task<TotalSucursal<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta);
-        Task<TotalSucursal<VentasPorSucursal>> punto3(DateTime from, DateTime to);
+        Task<VentasReporte> punto1(DateTime from, DateTime to);
+        Task<VentaPorObraSocial> punto2(DateTime fechaDesde, DateTime fechaHasta);
+        Task<Cobranza> punto3(DateTime from, DateTime to);
         Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta);
         Task<List<RankingVentaProducto>> punto5();
         Task<List<RankingCantidadProductos>> punto6();

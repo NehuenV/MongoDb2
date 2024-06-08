@@ -42,36 +42,36 @@ namespace DB2.Service.Implementation
                 throw;
             }
         }
-        public async Task<TotalSucursal<ReporteVentas>> punto1(DateTime from, DateTime to)
+        public async Task<VentasReporte> punto1(DateTime from, DateTime to)
         {
             try
             {
                 var totalVentas = await _mongoDbRepository.punto1(from, to);
-                return new TotalSucursal<ReporteVentas> (totalVentas,  totalVentas.Sum(f => f.TotalVentas));
+                return totalVentas;
             }
             catch (Exception)
             {
                 throw;
             }
         }
-        public async Task<TotalSucursal<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta)
+        public async Task<VentaPorObraSocial> punto2(DateTime fechaDesde, DateTime fechaHasta)
         {
             try
             {
                 var totalVentas = await _mongoDbRepository.punto2(fechaDesde, fechaHasta);
-                return new TotalSucursal<VentasPorSucursalYObraSocial>(totalVentas, totalVentas.Sum(f => f.TotalVentas));
+                return totalVentas;
             }
             catch (Exception)
             {
                 throw;
             }
         }
-        public async Task<TotalSucursal<VentasPorSucursal>> punto3(DateTime from, DateTime to)
+        public async Task<Cobranza> punto3(DateTime from, DateTime to)
         {
             try
             {
                 var totalVentas = await _mongoDbRepository.punto3(from, to);
-                return new TotalSucursal<VentasPorSucursal>(totalVentas, totalVentas.Sum(f => f.TotalVentas));
+                return totalVentas;
             }
             catch (Exception)
             {

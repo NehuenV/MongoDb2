@@ -57,76 +57,169 @@ namespace DB2.Repository.Implementation
             }
         }
 
-        public async Task<List<ReporteVentas>> punto1(DateTime fechaDesde, DateTime fechaHasta)
+        public async Task<VentasReporte> punto1(DateTime fechaDesde, DateTime fechaHasta)
         {
-            var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
-                         Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
-
-            var ventasPorSucursales = await _facturaCollection.Aggregate()
-                .Match(filtro)
-                .Group(f => new { f.Sucursal.NumeroSucursal, f.Sucursal.Localidad.Nombre }, g => new
-                {
-                    IdSucursal = g.Key.NumeroSucursal,
-                    NombreSucursal = g.Key.Nombre,
-                    TotalVentaSucursal = g.Select(x => x.DetalleFactura.Sum(f => f.Cantidad))
-                })
-                .ToListAsync();
-            return ventasPorSucursales.Select(v => new ReporteVentas
+            var matchStage = new BsonDocument("$match", new BsonDocument
             {
-                IdSucursal = v.IdSucursal,
-                NombreSucursal = v.NombreSucursal,
-                TotalVentas = v.TotalVentaSucursal.Sum()
-            }).ToList();
+                { "FechaHora", new BsonDocument
+                    {
+                        { "$gte", new BsonDateTime(new DateTime(2024, 5, 1, 0, 0, 0, DateTimeKind.Utc)) },
+                        { "$lte", new BsonDateTime(new DateTime(2024, 6, 30, 23, 59, 59, 999, DateTimeKind.Utc)) }
+                    }
+                }
+            });
+
+            var facetStage = new BsonDocument("$facet", new BsonDocument
+            {
+                { "TotalVentasCadena", new BsonArray
+                    {
+                        new BsonDocument("$group", new BsonDocument
+                        {
+                            { "_id", BsonNull.Value },
+                            { "TotalCantidadVentas", new BsonDocument("$sum", 1) }
+                        })
+                    }
+                },
+                { "VentasPorSucursal", new BsonArray
+                    {
+                        new BsonDocument("$group", new BsonDocument
+                        {
+                            { "_id", new BsonDocument("SucursalNombre", "$Sucursal.NumeroSucursal") },
+                            { "TotalCantidadVentas", new BsonDocument("$sum", 1) }
+                        }),
+                        new BsonDocument("$sort", new BsonDocument("TotalCantidadVentas", -1))
+                    }
+                }
+            });
+
+            var pipeline = new[] { matchStage, facetStage };
+            var cursor = await _facturaCollection.AggregateAsync<BsonDocument>(pipeline);
+            var ventasReporte = new VentasReporte();
+            await cursor.ForEachAsync(doc =>
+            {
+                if (doc.TryGetValue("TotalVentasCadena", out var totalVentasCadena))
+                {
+                    ventasReporte.TotalVentasCadena = totalVentasCadena.AsBsonArray
+                        .Select(v => BsonSerializer.Deserialize<VentaCadena>(v.AsBsonDocument))
+                        .ToList();
+                }
+                if (doc.TryGetValue("VentasPorSucursal", out var ventasPorSucursal))
+                {
+                    ventasReporte.VentasPorSucursal = ventasPorSucursal.AsBsonArray
+                        .Select(v => BsonSerializer.Deserialize<VentaSucursal>(v.AsBsonDocument))
+                        .ToList();
+                }
+            });
+            return ventasReporte;
         }
         // punto 2
-        public async Task<List<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta)
+        public async Task<VentaPorObraSocial> punto2(DateTime fechaDesde, DateTime fechaHasta)
         {
-            var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
-                         Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
-
-            var ventasPorSucursales = await _facturaCollection.Aggregate()
-                .Match(filtro)
-                .Group(f => new { f.Sucursal.NumeroSucursal, f.Sucursal.Localidad.Nombre, ObraSocial = f.Cliente.ObraSocial.Nombre }, g => new
-                {
-                    IdSucursal = g.Key.NumeroSucursal,
-                    NombreSucursal = g.Key.Nombre,
-                    ObraSocial = g.Key.ObraSocial,
-                    TotalVentaSucursal = g.Select(x => x.DetalleFactura.Sum(f => f.Cantidad))
-                })
-
-
-                .ToListAsync();
-
-            return ventasPorSucursales.Select(v => new VentasPorSucursalYObraSocial
+            var matchStage = new BsonDocument("$match", new BsonDocument
             {
-                IdSucursal = v.IdSucursal,
-                NombreSucursal = v.NombreSucursal,
-                TotalVentas = v.TotalVentaSucursal.Sum(),
-                ObraSocial = v.ObraSocial
-            }).OrderBy(x => x.ObraSocial).ToList();
+                { "FechaHora", new BsonDocument
+                    {
+                        { "$gte", new BsonDateTime(new DateTime(2024, 5, 1, 0, 0, 0, DateTimeKind.Utc)) },
+                        { "$lte", new BsonDateTime(new DateTime(2024, 6, 30, 23, 59, 59, 999, DateTimeKind.Utc)) }
+                    }
+                }
+            });
+
+            var groupStage = new BsonDocument("$group", new BsonDocument
+            {
+                { "_id", new BsonDocument
+                    {
+                        { "ObraSocial", new BsonDocument("$ifNull", new BsonArray { "$Cliente.ObraSocial.Nombre", "Privado" }) }
+                    }
+                },
+                { "TotalCantidadVentas", new BsonDocument("$sum", 1) }
+            });
+
+            var pipeline = new[] { matchStage, groupStage };
+
+            var cursor = await _facturaCollection.AggregateAsync<BsonDocument>(pipeline);
+            VentaPorObraSocial ventaPorObraSocial = new VentaPorObraSocial();
+            await cursor.ForEachAsync(doc =>
+            {
+                ventaPorObraSocial = BsonSerializer.Deserialize<VentaPorObraSocial>(doc);
+            });
+            return ventaPorObraSocial;
         }
 
         // punto 3
-        public async Task<List<VentasPorSucursal>> punto3(DateTime fechaDesde, DateTime fechaHasta)
+        public async Task<Cobranza> punto3(DateTime fechaDesde, DateTime fechaHasta)
         {
-            var filtro = Builders<Factura>.Filter.Gte(f => f.FechaHora, fechaDesde) &
-             Builders<Factura>.Filter.Lte(f => f.FechaHora, fechaHasta);
-
-            var ventasPorSucursales = await _facturaCollection.Aggregate()
-                .Match(filtro)
-                .Group(f => new { f.Sucursal.NumeroSucursal, f.Sucursal.Localidad.Nombre }, g => new
-                {
-                    IdSucursal = g.Key.NumeroSucursal,
-                    NombreSucursal = g.Key.Nombre,
-                    TotalVentaSucursal = g.Select(x => x.TotalVenta)
-                })
-                .ToListAsync();
-            return ventasPorSucursales.Select(v => new VentasPorSucursal
+            var matchStage = new BsonDocument("$match", new BsonDocument
             {
-                IdSucursal = v.IdSucursal,
-                NombreSucursal = v.NombreSucursal,
-                TotalVentas = v.TotalVentaSucursal.Sum()
-            }).ToList();
+                { "FechaHora", new BsonDocument
+                    {
+                        { "$gte", new BsonDateTime(fechaDesde)},
+                        { "$lte", new BsonDateTime(fechaHasta) }
+                    }
+                }
+            });
+
+            var facetStage = new BsonDocument("$facet", new BsonDocument
+            {
+                {
+                    "TotalCobranzaCadena", new BsonArray
+                    {
+                        new BsonDocument("$group", new BsonDocument
+                        {
+                            { "_id", "Tipo" },
+                            { "TotalCobranza", new BsonDocument("$sum", new BsonDocument("$toDouble", "$TotalVenta")) }
+                        }),
+                        new BsonDocument("$project", new BsonDocument
+                        {
+                            { "_id", 0 },
+                            { "TotalCobranza", 1 }
+                        })
+                    }
+                },
+                {
+                    "CobranzaPorSucursal", new BsonArray
+                    {
+                        new BsonDocument("$group", new BsonDocument
+                        {
+                            { "_id", "$Sucursal.NumeroSucursal" },
+                            { "TotalCobranza", new BsonDocument("$sum", new BsonDocument("$toDouble", "$TotalVenta")) }
+                        }),
+                        new BsonDocument("$project", new BsonDocument
+                        {
+                            { "_id", 0 },
+                            { "SucursalNumero", "$_id" },
+                            { "TotalCobranza", 1 }
+                        })
+                    }
+                }
+            });
+
+            var pipeline = new[] { matchStage, facetStage };
+            var cursor = await _facturaCollection.AggregateAsync<BsonDocument>(pipeline);
+
+            // Mapea los resultados a las clases definidas
+            var result = await cursor.FirstOrDefaultAsync();
+            var totalCobranzaCadenaArray = result["TotalCobranzaCadena"].AsBsonArray;
+            var totalCobranzaCadena = new List<TotalCobranzaCadena>();
+
+            foreach (var item in totalCobranzaCadenaArray)
+            {
+                var total = BsonSerializer.Deserialize<TotalCobranzaCadena>(item.AsBsonDocument);
+                totalCobranzaCadena.Add(total);
+            }
+
+            var cobranzaPorSucursalArray = result["CobranzaPorSucursal"].AsBsonArray;
+            var cobranzaPorSucursal = new List<CobranzaPorSucursal>();
+
+            foreach (var item in cobranzaPorSucursalArray)
+            {
+                var cobranza = BsonSerializer.Deserialize<CobranzaPorSucursal>(item.AsBsonDocument);
+                cobranzaPorSucursal.Add(cobranza);
+            }
+
+            var cobranzaResult = new Cobranza { cobranzaPorSucursal = cobranzaPorSucursal, totalCobranzaCadena = totalCobranzaCadena };
+
+            return cobranzaResult;
         }
 
         // punto 4

@@ -6,11 +6,19 @@ using System.Threading.Tasks;
 
 namespace BD2.Common.model
 {
-    public class VentasPorSucursal
+    public class TotalCobranzaCadena
     {
-        public int IdSucursal { get; set; }
-        public string NombreSucursal { get; set; }
-        public decimal TotalVentas { get; set; }
+        public decimal TotalCobranza { get; set; }
+    }
 
+    public class CobranzaPorSucursal
+    {
+        public decimal TotalCobranza { get; set; }
+        public int SucursalNumero { get; set; }
+    }
+    public class Cobranza
+    {
+        public List<TotalCobranzaCadena> totalCobranzaCadena { get; set; }
+        public List<CobranzaPorSucursal> cobranzaPorSucursal { get; set; }
     }
 }

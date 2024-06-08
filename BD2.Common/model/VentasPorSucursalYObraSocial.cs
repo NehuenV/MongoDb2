@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace BD2.Common.model
 {
-    public class VentasPorSucursalYObraSocial : VentasPorSucursal
+    public class VentaPorObraSocial
     {
-        public string ObraSocial { get;set; }
+        public ObraSocial ObraSocial { get; set; }
+        public int TotalCantidadVentas { get; set; }
+    }
+
+    public class ObraSocial
+    {
+        public string Nombre { get; set; }
     }
 }

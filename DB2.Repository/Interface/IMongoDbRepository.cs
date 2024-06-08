@@ -13,9 +13,9 @@ namespace DB2.Repository.Interface
     {
         Task<bool> AgregarData(List<Factura> lista);
         Task<List<Factura>> ConsultarData();
-        Task<List<ReporteVentas>> punto1(DateTime fechaDesde, DateTime fechaHasta);
-        Task<List<VentasPorSucursalYObraSocial>> punto2(DateTime fechaDesde, DateTime fechaHasta);
-        Task<List<VentasPorSucursal>> punto3(DateTime fechaDesde, DateTime fechaHasta);
+        Task<VentasReporte> punto1(DateTime fechaDesde, DateTime fechaHasta);
+        Task<VentaPorObraSocial> punto2(DateTime fechaDesde, DateTime fechaHasta);
+        Task<Cobranza> punto3(DateTime fechaDesde, DateTime fechaHasta);
         Task<List<CantidadProductos>> punto4(DateTime fechaDesde, DateTime fechaHasta);
         Task<List<RankingVentaProducto>> punto5();
         Task<List<RankingCantidadProductos>> punto6();
